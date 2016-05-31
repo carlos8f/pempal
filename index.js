@@ -17,14 +17,14 @@ exports.decode = function (str, options) {
   options || (options = {})
   assert(typeof str === 'string')
   var lines = str.split(/\r?\n/), line, chunks = []
-  var tagFound = false, tagMatch, headerParsed = false, headerKey, headerValue
+  var tagFound = false, endFound = false, headerParsed = false, headerKey, headerValue
   var header = {}
   var beginRE = new RegExp('-----\\s*BEGIN' + (options.tag ? ' ' + options.tag : '') + '\\s*-----')
   var endRE = new RegExp('-----\\s*END' + (options.tag ? ' ' + options.tag : '') + '\\s*-----')
   while (lines.length) {
     var line = lines.shift()
     if (!tagFound) {
-      tagMatch = line.match(beginRE)
+      var tagMatch = line.match(beginRE)
       if (tagMatch) tagFound = true
     }
     else if (!headerParsed) {
@@ -54,6 +54,11 @@ exports.decode = function (str, options) {
       }
     }
     else {
+      var endMatch = line.match(endRE)
+      if (endMatch) {
+        endFound = true
+        break
+      }
       chunks.push(line)
     }
   }
@@ -63,6 +68,7 @@ exports.decode = function (str, options) {
   }
 
   assert(tagFound)
+  assert(endFound)
 
   var buf = Buffer(chunks.join(''), 'base64')
 
